@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 
 
 def create_app(test_config=None):
@@ -28,18 +28,25 @@ def create_app(test_config=None):
     db.init_app(app)
 
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        db.init_db()
-        return 'Hello, World!'
-
     from . import auth
     app.register_blueprint(auth.bp)
 
     from . import notes
     app.register_blueprint(notes.bp)
-    app.add_url_rule('/', endpoint='index')
+    app.add_url_rule('/notes', endpoint='index')
+
+
+    # a simple page that says hello
+    @app.route('/hello')
+    def hello():
+        db.init_db()
+        return 'Database refreshed'
+
+
+    @app.route('/')
+    def reroute():
+        return redirect(url_for('index'))
+
 
 
     return app

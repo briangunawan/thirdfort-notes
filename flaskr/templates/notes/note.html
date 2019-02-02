@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script type="text/javascript">
+    
+    $(document).ready(function(){
+      $('#archived')[0].checked = {{note.archive}};
+    });
+
+    function sendUpdate() {
+      $.ajax({
+          url: '{{note.noteid}}',
+          type: 'PUT',
+          data: {
+            'id': '{{note.noteid}}',
+            'title': $("#title").val(),
+            'body': $("#body").val(),
+            'archived': $("#archived")[0].checked
+          },
+            complete: function () {
+              console.log('refresh');
+              location.reload();
+            }
+          });
+
+    }
+
+    function sendDelete() {
+      $.ajax({
+          url: '{{note.noteid}}',
+          type: 'DELETE',
+          complete: function() {
+            console.log('refresh');
+            location.reload();
+
+          }
+      });
+
+    }
+  </script>
+  <h1>{% block title %}Notes{% endblock %}</h1>
+  <a href="new">Create</a>
+{% endblock %}
+
+{% block content %}
+  <article class="note">
+    <header>
+      <div>
+        <input name="title" id="title" value="{{note.title}}" required>
+        <input name="body" id="body" value="{{note.body}}" required>
+        <input type="checkbox" id="archived" checked={{note.archive}}>
+        <input type="button" onclick="sendUpdate()" value="update">
+         <input type="button" onclick="sendDelete()" value="Delete" />
+
+        <h1>
+          <a href="{{note.noteid}}">{{ note.title }}</a>
+        </h1>
+        <p>
+          {{note.body}}
+        </p>
+      </div>
+      
+    </header>
+  </article>
+    <hr>
+{% endblock %}

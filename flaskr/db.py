@@ -1,5 +1,4 @@
-from py2neo import Graph, Node, Relationship, Schema, NodeMatcher, RelationshipMatcher, Subgraph
-
+from neo4j import GraphDatabase
 from flask import current_app, g
 from flask.cli import with_appcontext
 
@@ -7,34 +6,71 @@ import time
 
 
 def default_user(username):
-	user = g.nmatcher.match('User', name=username).first()
+	get_db()
+	with g.db.session() as session:
+		session.run("MERGE (u:User {{name:'{}'}})".format(username))
 
-	# if user doesn't exist, create user
-	if user is None:
-		g.db.create(Node('User',name=username))
+# get note by id
+def get_note(noteid):
+	get_db()
+	with g.db.session() as session:
+		ret = session.run("MATCH (n:Note {{noteid:'{}'}}) return n limit 1". format(noteid))
+	ret = ret.single()
+	print(ret)
+	if ret is None:
+		print('Noned')
+		return None
+	else:
+		return ret[0]
 
 # get non-archived notes
 def get_notes(username):
-	user = g.nmatcher.match('User', name=username).first()
-	notes = [g.db.evaluate("match (u:User {{name:'{}'}})-[r:belongsTo]-(n:Note) where n.archive = False return n".format(username))]
-	print(notes[0]['desc'])
-	return list(notes)
+	get_db()
+	print('get', username)
+	with g.db.session() as session:
+		notes = session.run("match (u:User {{name:'{}'}})<-[r:belongsTo]-(n:Note) where n.archive='false' return n".format(username))
+	print("match (u:User {{name:'{}'}})-[r:belongsTo]-(n:Note) where n.archive='false' return n".format(username))
+	return [x['n'] for x in notes.data()]
 
 # get archived notes
 def get_archived_notes(username):
-	user = g.nmatcher.match('User', name=username).first()
-	notes = [g.db.evaluate("match (u:User {name:'Bob'})-[r:belongsTo]-(n:Note) where n.archive = True return n")]
-	return list(notes)
+	get_db()
+	with g.db.session() as session:
+		notes = session.run("match (u:User {{name:'{}'}})<-[r:belongsTo]-(n:Note) where n.archive ='true' return n".format(username))
+	# print(notes.data()[0]['n']['title'])
+	return [x['n'] for x in notes.data()]
+
+# create new note
+def create_note(username, title, body):
+	get_db()
+	# add try, except and assert title/description
+	noteid = username + str(int(time.time()))
+
+	with g.db.session() as session:
+
+		session.run("MATCH (u:User {{name:'{}'}}) \
+			CREATE (n:Note {{title: '{}', body:'{}', archive:'false', noteid:'{}'}})-[:belongsTo]->(u)".format(username, title, body, noteid))
+
+	return 1
+
+def update_note(noteid, title, body, archived):
+	get_db()
+	print('udpating', title, body, archived)
+	with g.db.session() as session:
+		session.run("MATCH (n:Note {{noteid:'{}'}}) SET n.title='{}', n.body='{}', n.archive='{}'".format(noteid, title, body, archived))
+	return 1
 
 
+def delete_note(noteid):
+	get_db()
+	with g.db.session() as session:
+		session.run("MATCH (n:Note {{noteid:'{}'}}) DETACH DELETE n".format(noteid))
 
+	return 1
 
 def get_db():
 	if 'db' not in g:
-		# authenticate(current_app.config['DB_host_port'], current_app.config['DB_username'], current_app.config['DBpassword'])
-		g.db = Graph('http://52.23.245.35:35356/', auth=('neo4j', 'rotations-grinders-advances'))
-		g.nmatcher = NodeMatcher(g.db)
-		g.rmatcher = RelationshipMatcher(g.db)
+		g.db = GraphDatabase.driver('bolt://52.23.245.35:35355/', auth=('neo4j', 'rotations-grinders-advances'))
 	return g.db
 
 
@@ -44,50 +80,31 @@ def init_app(app):
 def init_db():
 	print('init')
 	db = get_db()
+	with db.session() as session:
+	# for dev: delete existing data in graph
+		session.run("MATCH (n) DETACH DELETE n")
 
-# for dev: delete existing data in graph
-	db.delete_all()
+	# add schema
+		session.run("CREATE CONSTRAINT ON (u:User) ASSERT u.name IS UNIQUE")
+		session.run("CREATE CONSTRAINT ON (n:Note) ASSERT n.noteid IS UNIQUE")
 
-# add schema
-	db.schema = create_schema()
-
-	# add test cases
+		# add test cases
+	
 	test_db()
 
-# create and return the schema for the graph
-def create_schema():
-	if 'db' in g:
-		s = Schema(g.db)
-
-	# s.create_index('User', 'name')
-	s.create_index('Note', 'id')
-	s.create_uniqueness_constraint('User','name')
-	s.create_uniqueness_constraint('belongsTo','name')
-
-
-	return s
 
 
 def test_db():
-	alice = Node("User", name="Alice")
-	bob = Node("User", name="Bob")
-	err = Node("User", name="Bob")
+	with get_db().session() as session:
+		# create test note-rel->user
+		session.run("CREATE (n:Note {title:'Note 1',body:'test note 1 for Alice',"
+					" archive:'false', noteid:'Alice" + str(int(time.time()))+"'})-[r:belongsTo]->(a:User {name:'Alice'})")
 
-	n1 = Node('Note', desc='test note 1 for alice', archive=False, id=time.time())
-	n2 = Node('Note', desc='test note 2 for bob', archive=False, id=time.time())
-	an = Relationship(n1, 'belongsTo', alice)
-	bn = Relationship(n2, 'belongsTo', bob)
+		session.run("merge (n:Note {title:'Note 3',body:'test note 3 for Bob',"
+					" archive:'true', noteid:'Bob" + str(int(time.time())+1)+"'})-[r:belongsTo]->(a:User {name:'Bob'})")
 
-
-	g.db.create(alice)
-	g.db.create(bob)
-	# g.db.create(err)
-
-	g.db.create(n1)
-	g.db.create(n2)
-	g.db.create(an)
-	g.db.create(bn)
-
+		session.run("match (a:User {name:'Bob'}) create (n:Note {title:'Note 2',body:'test note 2 for Bob',"
+					"archive:'false', noteid:'Bob" + str(int(time.time()))+"'})-[r:belongsTo]->(a)")
 
 
 def close_db(e=None):
