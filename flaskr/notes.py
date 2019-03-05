@@ -13,7 +13,7 @@ from flaskr.db import get_notes, get_note, create_note, delete_note, update_note
 
 bp = Blueprint('notes', __name__, url_prefix='/notes')
 
-
+# Endpoint to view notes created by user and create a new note.
 @bp.route('/', methods=('GET', 'POST'))
 @login_required
 def index():
@@ -28,6 +28,7 @@ def index():
 		create_note(session['username'], request.form['title'], request.form['body'])
 		return redirect('/')
 
+# endpoint to view archived notes
 @bp.route('/archived', methods=(['GET']))
 @login_required
 def archived():
@@ -37,12 +38,10 @@ def archived():
 		print(notes)
 		return render_template('notes/index.html', notes=notes)
 
-	elif request.method == 'POST':
-
-		create_note(session['username'], request.form['title'], request.form['body'])
-		return redirect('/')
-
-
+# Endpoints regarding a specific note.
+# GET: view note by ID
+# DELETE: delete note
+# PUT: update information of a note
 @bp.route('/<id>', methods=(['GET', 'DELETE', 'PUT']))
 @login_required
 def view_note(id):
@@ -72,22 +71,15 @@ def view_note(id):
 
 	return redirect('/')
 
-# front end endpoints 
+# Front end helper endpoints as html5 does not implement sending DELETE and PUT requests 
 @bp.route('/<id>/delete', methods=(['GET','POST']))
 @login_required
 def delete(id):
 	return requests.delete(request.url_root + 'notes/{}'.format(id)).content
+
 
 @bp.route('/new', methods=(['GET']))
 @login_required
 def new():
 	return render_template('notes/new.html')
 
-
-# @bp.route('/archived', methods=('GET', 'POST'))
-# def index():
-# 	db = get_db()
-
-# 	notes = get_notes(session['username'])
-# 	print(notes)
-# 	return render_template('notes/index.html', notes=notes)

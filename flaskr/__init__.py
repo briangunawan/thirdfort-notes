@@ -24,9 +24,9 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # import modules
     from . import db
     db.init_app(app)
-
 
     from . import auth
     app.register_blueprint(auth.bp)
@@ -36,8 +36,8 @@ def create_app(test_config=None):
     app.add_url_rule('/notes', endpoint='index')
 
 
-    # a simple page that says hello
-    @app.route('/hello')
+    # end point to refresh the database with mock data
+    @app.route('/refresh')
     def hello():
         db.init_db()
         return 'Database refreshed'

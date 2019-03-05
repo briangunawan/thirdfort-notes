@@ -8,7 +8,10 @@ from flaskr.db import get_db, default_user
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-@bp.route('/login', methods=('GET', 'POST'))
+# login endpoint. Currently takes any username and adds it to the db if new.
+# To extend: add password field. Hash and salt when adding to db for security.
+# Create sign up page. Did not spend too much time here as it was not part of the task.
+@bp.route('/login', methods=('POST'))
 def login():
 	if request.method == 'POST':
 		username = request.form['username']
@@ -27,7 +30,8 @@ def login():
 
 	return render_template('auth/login.html')
 
-@bp.route('/logout')
+# log the user out
+@bp.route('/logout', methods=('GET'))
 def logout():
     session.clear()
     return redirect(url_for('index'))

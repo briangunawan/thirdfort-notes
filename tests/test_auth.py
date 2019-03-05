@@ -13,15 +13,6 @@ def test_login(client, auth):
         assert g.user == 'Bob'
 
 
-# @pytest.mark.parametrize(('username', 'message'), (
-#     ('a', 'test', b'Incorrect username.'),
-#     ('test', 'a', b'Incorrect password.'),
-# ))
-
-# def test_login_validate_input(auth, username, password, message):
-#     response = auth.login(username, password)
-#     assert message in response.data
-
 def test_logout(client, auth):
     auth.login()
 
