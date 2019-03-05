@@ -19,11 +19,12 @@ To run test cases for each endpoint, run `pytest` in root directory.
 ## How to use the API
 ### Notes 
 Requests require a user to be logged in. 
+
 | Endpoint | Description |
 |--|--|
 | /notes | Methods: **GET**, **POST** <br><br> GET: Returns list of *note* objects that is owned by current logged in user.<br><br> POST: Create a new note belonging to logged in user. Requires 2 arguments in request `title: String` and `body: String`. Returns note's ID|
 |/notes/archived| Methods: **GET** <br><br> GET: Get list of archived note objects owned by current user. Returns a list of *note* objects.|
-|/notes/\<noteid\>|Methods: **GET**, **DELETE**, **PUT** <br><br> GET:  Returns *note* object with ID: \<noteid\>. <br><br> DELETE: Delete *note* with ID: \<noteid\> <br><br> PUT: Updates *note* with ID: \<noteid\> with arguments. Requires `title: String`, `body: String` and `archived: Boolean`|
+|/notes/\<noteid>|Methods: **GET**, **DELETE**, **PUT** <br><br> GET:  Returns *note* object with ID: \<noteid>. <br><br> DELETE: Delete *note* with ID: \<noteid> <br><br> PUT: Updates *note* with ID: \<noteid> with arguments. Requires `title: String`, `body: String` and `archived: Boolean`|
 
 ### Note Object
 |Variable| Description|
