@@ -14,7 +14,7 @@ from flaskr.db import get_notes, get_note, create_note, delete_note, update_note
 bp = Blueprint('notes', __name__, url_prefix='/notes')
 
 # Endpoint to view notes created by user and create a new note.
-@bp.route('/', methods=('GET', 'POST'))
+@bp.route('/', methods=(['GET', 'POST']))
 @login_required
 def index():
 	if request.method == 'GET':
