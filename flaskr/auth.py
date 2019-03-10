@@ -11,24 +11,25 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 # login endpoint. Currently takes any username and adds it to the db if new.
 # To extend: add password field. Hash and salt when adding to db for security.
 # Create sign up page. Did not spend too much time here as it was not part of the task.
-@bp.route('/login', methods=(['POST']))
+@bp.route('/login', methods=(['GET','POST']))
 def login():
-	if request.method == 'POST':
-		username = request.form['username']
-		# add password in further development
+    if request.method == 'POST':
+        username = request.form['username']
+        # add password in further development
 
-		db = get_db()
-		error = None
+        db = get_db()
+        error = None
 
-		if not username:
-			error = 'Username Required'
+        if not username:
+        	error = 'Username Required'
 
-		default_user(username)
-		session.clear()
-		session['username'] = username
-		return redirect(url_for('index'))
+        default_user(username)
+        session.clear()
+        session['username'] = username
+        return redirect(url_for('index'))
 
-	return render_template('auth/login.html')
+    else:
+        return "please log in"
 
 # log the user out
 @bp.route('/logout', methods=(['GET']))

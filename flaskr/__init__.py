@@ -35,6 +35,10 @@ def create_app(test_config=None):
     app.register_blueprint(notes.bp)
     app.add_url_rule('/notes', endpoint='index')
 
+    from . import api
+    app.register_blueprint(api.bp)
+    app.add_url_rule('/api/notes', endpoint='api')
+
 
     # end point to refresh the database with mock data
     @app.route('/refresh')
